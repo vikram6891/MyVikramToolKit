@@ -3,7 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>JCOM Run — WhatsApp outreach</title>
+<title>WhatsApp Runner — My Vikram Toolkit</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Runner">
+<meta name="theme-color" content="#14202B">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -161,6 +168,7 @@
   <div class="wrap">
     <div class="hrow">
       <span class="mark">JCOM Run</span>
+      <a href="/" style="color:#9FD8C4;text-decoration:none;font-size:13px;margin-right:auto;padding-left:10px">‹ Toolkit</a>
       <span class="count"><b id="cDone">0</b> / <span id="cAll">0</span> sent</span>
     </div>
     <div class="rail" id="rail"></div>
@@ -195,7 +203,8 @@
       </div>
       <input type="text" id="grpName" style="margin-top:8px" placeholder="Name used in the greeting">
       <input type="text" id="grpDetail" style="margin-top:8px" placeholder="Line shown under your contact">
-      <p class="hint">The first field goes into the greeting, the second sits under your contact details. Untick above and both drop out for anyone outside the group.</p>
+      <input type="text" id="grpCard" style="margin-top:8px" placeholder="Link to your contact card">
+      <p class="hint">Greeting name, the line under your contact, and the link to your own vCard — each preset keeps its own. Leave the link blank to drop that line from the message.</p>
 
       <label class="fld">Ask for their business intro</label>
       <div class="grp">
@@ -239,7 +248,8 @@ Iconiq Apparels — https://www.instagram.com/reel/DbQQysPhtC4/
 Please save my contact:
 Vikram Gunasekaran, Greator Software
 95355 99293
-gunasekaran@greatorsoftware.com[[group:
+gunasekaran@greatorsoftware.com
+Tap to save my contact: {card}[[group:
 {detail}]][[ask:
 
 I'd like to know your business better — could you reply with a short intro? What you do, and the customer who fits you best. Then I can send the right referrals your way.]]
@@ -260,7 +270,8 @@ Iconiq Apparels — https://www.instagram.com/reel/DbQQysPhtC4/
 En contact save panni vachukonga:
 Vikram Gunasekaran, Greator Software
 95355 99293
-gunasekaran@greatorsoftware.com[[group:
+gunasekaran@greatorsoftware.com
+Tap to save my contact: {card}[[group:
 {detail}]][[ask:
 
 Unga business pathi therinjukanum. Oru short intro reply pannunga — neenga enna pandreenga, ungaluku edhu maadhiri customer best fit nu. Adhu therinja naan correct referrals ungaluku anuppa mudiyum.]]
@@ -281,7 +292,8 @@ Iconiq Apparels — https://www.instagram.com/reel/DbQQysPhtC4/
 என் தொடர்பு விவரங்களைச் சேமித்து வைத்துக் கொள்ளுங்கள்:
 விக்ரம் குணசேகரன், Greator Software
 95355 99293
-gunasekaran@greatorsoftware.com[[group:
+gunasekaran@greatorsoftware.com
+தொடர்பைச் சேமிக்க: {card}[[group:
 {detail}]][[ask:
 
 உங்கள் வணிகம் குறித்தும் நான் தெரிந்து கொள்ள விரும்புகிறேன். நீங்கள் என்ன செய்கிறீர்கள், உங்களுக்கு எப்படிப்பட்ட வாடிக்கையாளர் பொருத்தமானவர் என்று ஒரு சிறிய அறிமுகம் அனுப்புங்கள். அப்போதுதான் சரியான ரெஃபரல்களை உங்களுக்கு அனுப்ப முடியும்.]]
@@ -293,9 +305,12 @@ Make Everything Great 🙏`
 
 const KEY = 'jcom-run:v1';
 const PRESETS = {
-  jcom:   { name:'JCOM',        detail:'JCOM L Perambalur 1.0 · Table ID 1526744' },
-  lions:  { name:'Lions Club',  detail:'Lion Centennial Club, Perambalur' },
-  custom: { name:'',            detail:'' }
+  jcom:   { name:'JCOM',       detail:'JCOM L Perambalur 1.0 · Table ID 1526744',
+            card:'https://whatsapp-runner.vercel.app/vikram-jcom.vcf' },
+  lions:  { name:'Lions Club', detail:'Lion Centennial Club, Perambalur',
+            card:'https://whatsapp-runner.vercel.app/vikram-lions.vcf' },
+  custom: { name:'',           detail:'',
+            card:'https://whatsapp-runner.vercel.app/vikram.vcf' }
 };
 const blank = () => ({
   lang:'en', tpl:{en:TPL.en, ta:TPL.ta, tm:TPL.tm}, raw:'', people:[],
@@ -378,14 +393,17 @@ function buildMsg(p){
   const cur = state.presets[state.preset] || { name:'', detail:'' };
   const g = (cur.name || '').trim();
   const d = (cur.detail || '').trim();
+  const c = (cur.card || '').trim();
   const on = { group: !!(state.grpOn && g), ask: !!state.askOn };
 
   // [[group: ... ]] and [[ask: ... ]] only go out when their box is ticked
   t = t.replace(/\[\[(group|ask):([\s\S]*?)\]\]/g, (m, kind, body) => on[kind] ? body : '');
   t = t.replace(/\[\[([\s\S]*?)\]\]/g, (m, body) => on.group ? body : '');   // older templates
 
+  if (!c) t = t.split('\n').filter(l => l.indexOf('{card}') === -1).join('\n');
   return t.replace(/\{group\}/g, g)
           .replace(/\{detail\}/g, d)
+          .replace(/\{card\}/g, c)
           .replace(/\{name\}/g, p.name)
           .replace(/\n{3,}/g, '\n\n')
           .trim();
@@ -502,6 +520,7 @@ function syncGroupFields(){
   const cur = state.presets[state.preset];
   $('grpName').value   = cur.name;
   $('grpDetail').value = cur.detail;
+  $('grpCard').value   = cur.card || '';
   $('grpName').disabled = $('grpDetail').disabled = !state.grpOn;
   [...$('presetBtns').children].forEach(b =>
     b.setAttribute('aria-pressed', b.dataset.p === state.preset));
@@ -514,6 +533,7 @@ $('presetBtns').onclick = e => {
 };
 $('grpName').oninput   = () => { state.presets[state.preset].name   = $('grpName').value;   save(); render(); };
 $('grpDetail').oninput = () => { state.presets[state.preset].detail = $('grpDetail').value; save(); render(); };
+$('grpCard').oninput   = () => { state.presets[state.preset].card   = $('grpCard').value;   save(); render(); };
 $('askOn').onchange = () => { state.askOn = $('askOn').checked; save(); render(); };
 
 $('tpl').oninput = () => { state.tpl[state.lang] = $('tpl').value; save(); render(); };
