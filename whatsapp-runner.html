@@ -203,8 +203,7 @@
       </div>
       <input type="text" id="grpName" style="margin-top:8px" placeholder="Name used in the greeting">
       <input type="text" id="grpDetail" style="margin-top:8px" placeholder="Line shown under your contact">
-      <input type="text" id="grpCard" style="margin-top:8px" placeholder="Link to your contact card">
-      <p class="hint">Greeting name, the line under your contact, and the link to your own vCard — each preset keeps its own. Leave the link blank to drop that line from the message.</p>
+      <p class="hint">The first field goes into the greeting, the second sits under your contact details. Untick above and both drop out for anyone outside the group.</p>
 
       <label class="fld">Ask for their business intro</label>
       <div class="grp">
@@ -248,8 +247,7 @@ Iconiq Apparels — https://www.instagram.com/reel/DbQQysPhtC4/
 Please save my contact:
 Vikram Gunasekaran, Greator Software
 95355 99293
-gunasekaran@greatorsoftware.com
-Tap to save my contact: {card}[[group:
+gunasekaran@greatorsoftware.com[[group:
 {detail}]][[ask:
 
 I'd like to know your business better — could you reply with a short intro? What you do, and the customer who fits you best. Then I can send the right referrals your way.]]
@@ -270,8 +268,7 @@ Iconiq Apparels — https://www.instagram.com/reel/DbQQysPhtC4/
 En contact save panni vachukonga:
 Vikram Gunasekaran, Greator Software
 95355 99293
-gunasekaran@greatorsoftware.com
-Tap to save my contact: {card}[[group:
+gunasekaran@greatorsoftware.com[[group:
 {detail}]][[ask:
 
 Unga business pathi therinjukanum. Oru short intro reply pannunga — neenga enna pandreenga, ungaluku edhu maadhiri customer best fit nu. Adhu therinja naan correct referrals ungaluku anuppa mudiyum.]]
@@ -292,8 +289,7 @@ Iconiq Apparels — https://www.instagram.com/reel/DbQQysPhtC4/
 என் தொடர்பு விவரங்களைச் சேமித்து வைத்துக் கொள்ளுங்கள்:
 விக்ரம் குணசேகரன், Greator Software
 95355 99293
-gunasekaran@greatorsoftware.com
-தொடர்பைச் சேமிக்க: {card}[[group:
+gunasekaran@greatorsoftware.com[[group:
 {detail}]][[ask:
 
 உங்கள் வணிகம் குறித்தும் நான் தெரிந்து கொள்ள விரும்புகிறேன். நீங்கள் என்ன செய்கிறீர்கள், உங்களுக்கு எப்படிப்பட்ட வாடிக்கையாளர் பொருத்தமானவர் என்று ஒரு சிறிய அறிமுகம் அனுப்புங்கள். அப்போதுதான் சரியான ரெஃபரல்களை உங்களுக்கு அனுப்ப முடியும்.]]
@@ -305,12 +301,9 @@ Make Everything Great 🙏`
 
 const KEY = 'jcom-run:v1';
 const PRESETS = {
-  jcom:   { name:'JCOM',       detail:'JCOM L Perambalur 1.0 · Table ID 1526744',
-            card:'https://whatsapp-runner.vercel.app/vikram-jcom.vcf' },
-  lions:  { name:'Lions Club', detail:'Lion Centennial Club, Perambalur',
-            card:'https://whatsapp-runner.vercel.app/vikram-lions.vcf' },
-  custom: { name:'',           detail:'',
-            card:'https://whatsapp-runner.vercel.app/vikram.vcf' }
+  jcom:   { name:'JCOM',        detail:'JCOM L Perambalur 1.0 · Table ID 1526744' },
+  lions:  { name:'Lions Club',  detail:'Lion Centennial Club, Perambalur' },
+  custom: { name:'',            detail:'' }
 };
 const blank = () => ({
   lang:'en', tpl:{en:TPL.en, ta:TPL.ta, tm:TPL.tm}, raw:'', people:[],
@@ -393,17 +386,14 @@ function buildMsg(p){
   const cur = state.presets[state.preset] || { name:'', detail:'' };
   const g = (cur.name || '').trim();
   const d = (cur.detail || '').trim();
-  const c = (cur.card || '').trim();
   const on = { group: !!(state.grpOn && g), ask: !!state.askOn };
 
   // [[group: ... ]] and [[ask: ... ]] only go out when their box is ticked
   t = t.replace(/\[\[(group|ask):([\s\S]*?)\]\]/g, (m, kind, body) => on[kind] ? body : '');
   t = t.replace(/\[\[([\s\S]*?)\]\]/g, (m, body) => on.group ? body : '');   // older templates
 
-  if (!c) t = t.split('\n').filter(l => l.indexOf('{card}') === -1).join('\n');
   return t.replace(/\{group\}/g, g)
           .replace(/\{detail\}/g, d)
-          .replace(/\{card\}/g, c)
           .replace(/\{name\}/g, p.name)
           .replace(/\n{3,}/g, '\n\n')
           .trim();
@@ -520,7 +510,6 @@ function syncGroupFields(){
   const cur = state.presets[state.preset];
   $('grpName').value   = cur.name;
   $('grpDetail').value = cur.detail;
-  $('grpCard').value   = cur.card || '';
   $('grpName').disabled = $('grpDetail').disabled = !state.grpOn;
   [...$('presetBtns').children].forEach(b =>
     b.setAttribute('aria-pressed', b.dataset.p === state.preset));
@@ -533,7 +522,6 @@ $('presetBtns').onclick = e => {
 };
 $('grpName').oninput   = () => { state.presets[state.preset].name   = $('grpName').value;   save(); render(); };
 $('grpDetail').oninput = () => { state.presets[state.preset].detail = $('grpDetail').value; save(); render(); };
-$('grpCard').oninput   = () => { state.presets[state.preset].card   = $('grpCard').value;   save(); render(); };
 $('askOn').onchange = () => { state.askOn = $('askOn').checked; save(); render(); };
 
 $('tpl').oninput = () => { state.tpl[state.lang] = $('tpl').value; save(); render(); };
