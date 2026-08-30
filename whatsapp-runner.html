@@ -175,7 +175,7 @@
 
       <label class="fld" for="paste">Members — one per line</label>
       <textarea id="paste" placeholder="Kumar, 9876543210&#10;Ravi Shankar 9445566778&#10;Meena	+91 98400 12345"></textarea>
-      <p class="hint">Paste your sheet straight in: <b>Name, Phone, Chapter, Business</b>. A plain <b>Name, Phone</b> line works too. Only the name goes into the message — chapter and business are saved into the contact card.</p>
+      <p class="hint">Commas or spaces, whichever you have. <b>Name, Phone, Chapter, Business</b> from a sheet, or just <b>Kumar 9876543210 Gifts</b> typed out. Mix both across lines if you like. Only the name goes into the message — the rest is saved into the contact card.</p>
 
       <label class="fld">Language</label>
       <div class="toggle" id="langBtns">
@@ -357,9 +357,11 @@ function parseList(text){
     if (f.length >= 2){                                     // Name,Phone,Chapter,Business
       name = f[0]; numSrc = f[1]; chapter = f[2] || ''; business = f[3] || '';
     } else {
-      const m = raw.match(/[\d][\d\s\-().+]{7,}/);           // "Kumar 9876543210"
+      const m = raw.match(/[\d][\d\s\-().+]{7,}/);           // "Kumar 9876543210 Gifts"
       if (!m){ bad.push(raw); return; }
-      numSrc = m[0]; name = raw.replace(m[0],'').trim();
+      numSrc   = m[0];
+      name     = raw.slice(0, m.index).trim();
+      business = raw.slice(m.index + m[0].length).replace(/^[-–—·|]+/,'').trim();
     }
 
     const intl = normNumber(numSrc);
